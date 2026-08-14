@@ -88,7 +88,8 @@ When mode is code, write Python for Pyodide with pandas (pd), numpy (np) and sci
 - df already exists. Do not read files or import matplotlib/plotly.
 - Assign final answer to result.
 - Resolve column names defensively from df.columns.
-- If useful, assign chart as a plain Plotly figure spec with real computed values.
+- If the user asks to plot/chart/graph/visualize/show trend/compare visually, you MUST assign a variable named chart containing a plain-dict Plotly figure spec built from real computed values: {"data": [{"type": "bar", "x": [...], "y": [...]}], "layout": {"title": "..."}}. This is not optional when a visual is requested — omitting chart in that case is a failure.
+- Otherwise, assign chart only if a visual genuinely adds value beyond the text answer.
 - Honour conversational chart edits from history.
 - Never mutate df destructively unless explicitly approved.
 - Keep it under 45 lines.
@@ -105,11 +106,12 @@ Reply with STRICT JSON only: {"mode":"chat"|"code","intent":"short intent label"
 
 export type ExplainResult = { explanation: string; followups: string[]; verified: boolean };
 
-export async function explainResult(input: { question: string; code: string; execOutput: string; role: string; persona: string; eli5: boolean; tldr: boolean }): Promise<ExplainResult> {
+export async function explainResult(input: { question: string; code: string; execOutput: string; role: string; persona: string; eli5: boolean; tldr: boolean; hasChart: boolean }): Promise<ExplainResult> {
   const system = `You explain executed data-analysis results for a ${input.role}. ${ROLE_STYLE[input.role] ?? ROLE_STYLE.Other}
 Persona: ${input.persona}. ${input.eli5 ? "Explain like the reader is five: simple words, tiny sentences, one analogy." : ""}
 ${input.tldr ? "Start with a one-line executive TL;DR in bold, then at most three bullets." : ""}
 Every number you state MUST appear in the execution output. Never invent or recompute numbers.
+${input.hasChart ? "A chart WAS generated and will be shown to the user alongside your text — you may reference it (e.g. \"the chart below shows...\")." : "NO chart was generated for this turn. Do NOT say \"here is the chart\", \"the bar chart below\", or otherwise claim a visual exists — describe the numbers in words/text only."}
 Set verified false if the output does not support a confident answer. Lead with the business answer, then supporting detail.
 State assumptions and limitations briefly. Do not claim causation from correlation. Vary phrasing naturally.
 Reply with STRICT JSON only: {"explanation":"markdown","followups":["..."],"verified":true|false}`;
