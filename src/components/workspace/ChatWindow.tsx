@@ -265,6 +265,7 @@ export function ChatWindow({
                 persona: "Rigorous, friendly analyst",
                 eli5: /eli5|explain like/i.test(question),
                 tldr: /tl;?dr|summar(y|ise|ize)/i.test(question),
+                hasChart: exec.chart != null,
               },
             });
             assistant = {
